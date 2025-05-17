@@ -12,6 +12,8 @@ def load_neurons_from_file(filepath):
     biases = ast.literal_eval(biases_str)
 
     return weights, biases
+
+
 if __name__ == "__main__":
 
     weights_loaded, biases_loaded = load_neurons_from_file("mlp_weights_biases.txt")
