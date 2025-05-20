@@ -13,6 +13,17 @@ def load_neurons_from_file(filepath):
 
     return weights, biases
 
+def write_layer_neuron():
+
+    return    
+
+def write_top_layer():
+
+    return
+
+def append_to_file():
+
+    return
 
 if __name__ == "__main__":
 
