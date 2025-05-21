@@ -14,7 +14,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y, test_size=0.2, random_state=42)
 
-    mlp = MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=20, alpha=1e-4,
+    mlp = MLPClassifier(hidden_layer_sizes=(16, 16), max_iter=20, alpha=1e-4,
                         solver='adam', verbose=True, random_state=1)
     mlp.fit(X_train, y_train)
 
