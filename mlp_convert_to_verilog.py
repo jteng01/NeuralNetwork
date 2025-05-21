@@ -9,6 +9,12 @@ def float_to_q7_24(value: float) -> int:
         fixed_val = -2**31
     return fixed_val
 
+def sv_int_literal(val: int) -> str:
+    if val < 0:
+        return f"-32'sd{abs(val)}"
+    else:
+        return f"32'sd{val}"
+
 def load_neurons_from_file(filepath):
     with open(filepath, "r") as f:
         content = f.read()
@@ -40,10 +46,12 @@ def write_parameters(weights, biases):
         n_neurons = len(weights[layer_idx])
         n_inputs = len(weights[layer_idx][0])
         code += f"\n    //Layer {layer_idx}: {n_inputs} inputs, {n_neurons} neurons\n"
-        code += f"    localparam logic signed [31:0] layer{layer_idx}_weights [0:{n_neurons-1}][0:{n_inputs}] = '{{\n"
+        code += f"    localparam logic signed [31:0] layer{layer_idx}_weights [0:{n_neurons-1}][0:{n_inputs-1}] = '{{\n"
+
         for neuron_idx in range(n_neurons):
             line = "        '{"
-            line += ", ".join(f"32'sd{w}" for w in weights[layer_idx][neuron_idx])
+            fixed_weights = [float_to_q7_24(w) for w in weights[layer_idx][neuron_idx]]
+            line += ", ".join(sv_int_literal(w) for w in fixed_weights)
             line += "}"
             if neuron_idx != n_neurons - 1:
                 line += ","
@@ -51,7 +59,8 @@ def write_parameters(weights, biases):
         code += "    };\n\n"
 
         code += f"    localparam logic signed [31:0] layer{layer_idx}_biases [0:{n_neurons-1}] = '{{\n        "
-        code += ", ".join(f"32'sd{b}" for b in biases[layer_idx])
+        fixed_biases = [float_to_q7_24(b) for b in biases[layer_idx]]
+        code += ", ".join(sv_int_literal(b) for b in fixed_biases)
         code += "\n    };\n"
     return code
 
