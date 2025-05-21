@@ -1,9 +1,11 @@
 module mlp_neural_net #(
-    parameter int INPUTS  = 784,
-    parameter int OUTPUTS = 10
+    parameter int INPUTS           = 784,
+    parameter int OUTPUTS          = 10,
+    parameter int OUTPUT_IDX_BITS  = 4
 ) (
     input  logic signed [31:0] data_inputs  [0:INPUTS-1],
-    output logic signed [31:0] data_outputs [0:OUTPUTS-1]
+    output logic signed [31:0] data_outputs [0:OUTPUTS-1],
+    output logic [OUTPUT_IDX_BITS-1:0] predicted_class
 );
 
 
@@ -273,4 +275,19 @@ module mlp_neural_net #(
         .data_outputs(data_outputs)
     );
 
+
+
+    // Predicted class logic
+    always_comb begin
+        logic signed [31:0] max_val;
+        max_val = data_outputs[0];
+        predicted_class = '0;
+
+        for (int i = 1; i < OUTPUTS; i++) begin
+            if (data_outputs[i] > max_val) begin
+                max_val = data_outputs[i];
+                predicted_class = i[OUTPUT_IDX_BITS-1:0];
+            end
+        end
+    end
 endmodule

@@ -1,12 +1,14 @@
 module mlp_neural_net_example #(
-    parameter int INPUTS  = 9,
-    parameter int OUTPUTS = 2
+    parameter int INPUTS           = 9,
+    parameter int OUTPUTS          = 2,
+    parameter int OUTPUT_IDX_BITS  = 1
 ) (
     input  logic signed [31:0] data_inputs  [0:INPUTS-1],
-    output logic signed [31:0] data_outputs [0:OUTPUTS-1]
+    output logic signed [31:0] data_outputs [0:OUTPUTS-1],
+    output logic [OUTPUT_IDX_BITS-1:0] predicted_class
 );
 
-    //Layer 0: 9 inputs, 8 neurons
+    // Layer 0: 9 inputs, 8 neurons
     localparam logic signed [31:0] layer0_weights [0:7][0:8] = '{
         '{32'sd4194304, -32'sd8388608, 32'sd1258291, 32'sd2097152, 32'sd1048576, 32'sd524288, 32'sd0, -32'sd2097152, 32'sd3145728},
         '{-32'sd4194304, 32'sd8388608, 32'sd1048576, 32'sd524288, -32'sd1048576, 32'sd0, 32'sd1572864, 32'sd3145728, 32'sd2097152},
@@ -23,7 +25,7 @@ module mlp_neural_net_example #(
         32'sd3145728, -32'sd1048576, 32'sd1572864, 32'sd262144
     };
 
-    //Layer 1: 8 inputs, 4 neurons
+    // Layer 1: 8 inputs, 4 neurons
     localparam logic signed [31:0] layer1_weights [0:3][0:7] = '{
         '{32'sd2097152, -32'sd1048576, 32'sd524288, -32'sd524288, 32'sd262144, -32'sd262144, 32'sd131072, -32'sd131072},
         '{32'sd1048576, 32'sd1048576, 32'sd1048576, 32'sd1048576, 32'sd1048576, 32'sd1048576, 32'sd1048576, 32'sd1048576},
@@ -35,7 +37,7 @@ module mlp_neural_net_example #(
         32'sd0, 32'sd1048576, -32'sd1048576, 32'sd524288
     };
 
-    //Layer 2: 4 inputs, 2 neurons
+    // Layer 2: 4 inputs, 2 neurons
     localparam logic signed [31:0] layer2_weights [0:1][0:3] = '{
         '{32'sd1048576, 32'sd524288, -32'sd524288, 32'sd262144},
         '{-32'sd1048576, 32'sd1048576, -32'sd1048576, 32'sd1048576}
@@ -45,11 +47,11 @@ module mlp_neural_net_example #(
         32'sd2097152, -32'sd1048576
     };
 
-    //Intermediate outputs
+    // Intermediate outputs
     logic signed [31:0] layer0_out [0:7];
     logic signed [31:0] layer1_out [0:3];
 
-    //Instantiate Layer 0
+    // Instantiate Layer 0
     layer #(
         .NEURONS(8),
         .PREV_LAYER_OUTPUTS(9)
@@ -60,7 +62,7 @@ module mlp_neural_net_example #(
         .data_outputs(layer0_out)
     );
 
-    //Instantiate Layer 1
+    // Instantiate Layer 1
     layer #(
         .NEURONS(4),
         .PREV_LAYER_OUTPUTS(8)
@@ -71,7 +73,7 @@ module mlp_neural_net_example #(
         .data_outputs(layer1_out)
     );
 
-    //Instantiate Layer 2
+    // Instantiate Layer 2
     layer #(
         .NEURONS(2),
         .PREV_LAYER_OUTPUTS(4)
@@ -81,5 +83,19 @@ module mlp_neural_net_example #(
         .biases(layer2_biases),
         .data_outputs(data_outputs)
     );
+
+    // Compute predicted class
+    always_comb begin
+        logic signed [31:0] max_val;
+        max_val = data_outputs[0];
+        predicted_class = '0;
+
+        for (int i = 1; i < OUTPUTS; i++) begin
+            if (data_outputs[i] > max_val) begin
+                max_val = data_outputs[i];
+                predicted_class = i[OUTPUT_IDX_BITS-1:0];
+            end
+        end
+    end
 
 endmodule
