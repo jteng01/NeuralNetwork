@@ -31,12 +31,16 @@ def load_neurons_from_file(filepath):
 def write_module_definition(weights, biases):
     INPUTS = len(weights[0][0])
     OUTPUTS = len(weights[-1])
+    OUTPUT_IDX_BITS = (OUTPUTS - 1).bit_length() if OUTPUTS > 1 else 1
+
     return f"""module mlp_neural_net #(
-    parameter int INPUTS  = {INPUTS},
-    parameter int OUTPUTS = {OUTPUTS}
+    parameter int INPUTS           = {INPUTS},
+    parameter int OUTPUTS          = {OUTPUTS},
+    parameter int OUTPUT_IDX_BITS  = {OUTPUT_IDX_BITS}
 ) (
     input  logic signed [31:0] data_inputs  [0:INPUTS-1],
-    output logic signed [31:0] data_outputs [0:OUTPUTS-1]
+    output logic signed [31:0] data_outputs [0:OUTPUTS-1],
+    output logic [OUTPUT_IDX_BITS-1:0] predicted_class
 );
 """
 
@@ -111,7 +115,28 @@ def write_layers_instantiation(weights, biases):
             code += f"        .biases(layer{layer_idx}_biases),\n"
             code += f"        .data_outputs(layer{layer_idx}_out)\n"
             code += f"    );\n\n"
-    code += "endmodule\n"
+    return code
+
+def write_predicted_class_logic(weights):
+    OUTPUTS = len(weights[-1])
+    OUTPUT_IDX_BITS = (OUTPUTS - 1).bit_length() if OUTPUTS > 1 else 1
+
+    code = f"""
+    // Predicted class logic
+    always_comb begin
+        logic signed [31:0] max_val;
+        max_val = data_outputs[0];
+        predicted_class = '0;
+
+        for (int i = 1; i < OUTPUTS; i++) begin
+            if (data_outputs[i] > max_val) begin
+                max_val = data_outputs[i];
+                predicted_class = i[OUTPUT_IDX_BITS-1:0];
+            end
+        end
+    end
+endmodule
+"""
     return code
 
 if __name__ == "__main__":
@@ -122,6 +147,7 @@ if __name__ == "__main__":
     verilog_code.append(write_parameters(weights_loaded, biases_loaded))
     verilog_code.append(write_intermediate_signals(weights_loaded, biases_loaded))
     verilog_code.append(write_layers_instantiation(weights_loaded, biases_loaded))
+    verilog_code.append(write_predicted_class_logic(weights_loaded))
 
     full_code = "\n".join(verilog_code)
 

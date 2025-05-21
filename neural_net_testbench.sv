@@ -7,13 +7,15 @@ module tb_mlp_neural_net;
 
     logic signed [31:0] data_inputs  [0:INPUTS-1];
     logic signed [31:0] data_outputs [0:OUTPUTS-1];
+    logic [$clog2(OUTPUTS)-1:0] predicted_class;
 
     mlp_neural_net #(
         .INPUTS(INPUTS),
         .OUTPUTS(OUTPUTS)
     ) uut (
         .data_inputs(data_inputs),
-        .data_outputs(data_outputs)
+        .data_outputs(data_outputs),
+        .predicted_class(predicted_class)
     );
 
     initial begin
@@ -25,6 +27,8 @@ module tb_mlp_neural_net;
         for (int i = 0; i < OUTPUTS; i++) begin
             $display("Output[%0d] = %d", i, data_outputs[i]);
         end
+
+        $display("Predicted class = %0d", predicted_class);
 
         $finish;
     end
